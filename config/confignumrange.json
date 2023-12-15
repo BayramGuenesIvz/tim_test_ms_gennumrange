@@ -1,0 +1,6 @@
+{
+    "Dummy":"",
+    "DB_UserPwd":"root:123", 
+    "SERVICEDB": "localhost",
+    "PORTDB": "3306"
+  }

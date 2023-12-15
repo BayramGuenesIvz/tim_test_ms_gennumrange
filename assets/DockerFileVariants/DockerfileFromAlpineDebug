@@ -1,0 +1,25 @@
+FROM scratch as builder
+
+
+COPY cmd/tim_test_ms_gennumrange/main /
+COPY web /web
+
+
+
+#===============================================================
+# develop stage
+#===============================================================
+FROM alpine as develop
+
+RUN apk update && \
+    apk add \
+    bash \
+    curl \
+    wget && \
+  rm -rf  /var/cache/apk/*  
+
+EXPOSE 8080
+
+COPY --from=builder / .
+
+CMD ["./main"]

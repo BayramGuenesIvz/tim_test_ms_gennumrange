@@ -1,0 +1,10 @@
+FROM scratch as builder
+
+
+COPY cmd/tim_test_ms_gennumrange/main /
+COPY web /web
+
+ENTRYPOINT [ "./main" ]
+
+
+
