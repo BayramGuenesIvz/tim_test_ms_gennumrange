@@ -29,7 +29,8 @@ RUN groupadd -g 3203 wdr-a2k8s
 RUN usermod -a -G wdr-a2k8s root
 
 
-COPY cmd/tim_test_ms_gennumrange/main app/main
+#COPY cmd/tim_test_ms_gennumrange/main app/main
+COPY ./main app/main
 COPY web app/web
 
 WORKDIR /app
