@@ -1,0 +1,30 @@
+name: Build
+
+on:
+  push:
+    branches-ignore:
+      - main
+
+jobs:
+  # Building backend/server application
+  build-backend:
+    uses: BayramGuenesIvz/bayramguenesivz-shared-workflows/.github/workflows/go-build.yml@master
+    with:
+      run-tests: true
+      go-file-path: "./cmd/tim_test_ms_gennumrange/main.go"
+    secrets:
+      PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+  ## Building client application
+  #build-frontend:
+  #  uses: WestdeutscherRundfunkKoeln/am-shared-workflows/.github/workflows/npm-build.yml@main
+  #  with:
+  #    client-path: "${{ vars.CLIENT_PATH }}"
+  #    artifact-path: "./${{ vars.CLIENT_PATH }}"
+  #  secrets:
+  #    PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+
+  # Build and push Docker image
+  publish:
+    needs: [build-backend]  #  needs: [[build-backend, build-frontend]
+    uses: BayramGuenesIvz/bayramguenesivz-shared-workflows/.github/workflows/docker-build-push.yml@master
+    secrets: inherit

@@ -27,9 +27,10 @@ yarn-error.log*
 
 /.idea
 .idea
-Dockerfile
+#Dockerfile
 main
 tim_test_ms_gennumrange.git
 ./tim_test_ms_gennumrange
 docker-entrypoint.sh
 */main
+tim_test_ms_gennumrange

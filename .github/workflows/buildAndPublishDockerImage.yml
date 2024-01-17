@@ -1,0 +1,125 @@
+# Workflowname
+name: Build
+ 
+# Wann soll der Workflow getriggert werden
+on:
+  push:
+    branches: [ "test" ]
+ 
+# Notwendige Berechtigungen -> https://docs.github.com/en/actions/using-jobs/assigning-permissions-to-jobs
+permissions:
+  contents: read
+  packages: read
+ 
+# Umgebungsvariablen
+env:
+  REGISTRY: ghcr.io #github container registry
+  IMAGE_NAME: ${{ github.repository }}
+  TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }} # Zugriff auf das in dem Repo konfigurierte Secret PERSONAL_ACCESS_TOKEN
+ 
+jobs:
+  # Die Jobs build-backend und build-frontend werden in diesem Workflow parallel ausgeführt, um beim Builden des Docker images Zugriff auf die Artefakte zu haben müssen diese geteilt werden. Hierzu wird eine vordefinierte Action (actions/uplad-artifact@v4) genutzt. Der sogenannte Marketplace wo vordefinierte Actions hinterlegt sind kann hier gefunden werden -> https://github.com/marketplace?category=&query=&type=actions&verification=
+ 
+  # Building backend/server
+  build-backend:
+    runs-on: ubuntu-latest 
+     
+    steps:
+    #https://github.com/marketplace/actions/checkout
+    - uses: actions/checkout@v4
+ 
+    # Building go binary
+    - name: Set up Go
+      #https://github.com/marketplace/actions/setup-go-environment
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.20'
+ 
+    - name: Configure git for private modules
+      run: git config --global url."https://${{ github.actor }}:${{ env.TOKEN }}@github.com".insteadOf "https://github.com" # Zugriff auf die privaten GoLang Repos (falls man in seinem Service auf andere private GoLang Module zugreift, wie z.B. https://github.com/WestdeutscherRundfunkKoeln/tim-lib-stdout4go)
+    - name: Build
+      run: CGO_ENABLED=0 GOOS=linux go build -o ./main ./cmd/tim_web_show_apps/main.go
+ 
+    - name: Test
+      run: go test -v ./...
+ 
+    # Upload der Binary für den späteren Zugriff
+    # https://github.com/marketplace/actions/upload-a-build-artifact
+    - uses: actions/upload-artifact@v4
+      with:
+        name: main
+        path: ./main
+ 
+#  # Building client application
+#  build-frontend:
+#    runs-on: ubuntu-latest
+# 
+#    steps:
+#      - uses: actions/checkout@v4
+#      - name: Setup node and npm
+#        #https://github.com/marketplace/actions/setup-node-js-environment
+#        uses: actions/setup-node@v3
+#        with:
+#          node-version: 18.x
+#          registry-url: "https://npm.pkg.github.com"
+#      - name: Install npm dependencies
+#        run: npm ci --ignore-scripts --prefix ${{ vars.CLIENT_PATH }}
+#        env:
+#          NODE_AUTH_TOKEN: ${{ env.TOKEN }} # Der Token wird benötigt um Zugriff auf die privaten npm packages zu haben
+#      - name: Test and Build Application
+#        run: |
+#          npm run test --if-present --prefix ${{ vars.CLIENT_PATH }}
+#          npm run build --prefix ${{ vars.CLIENT_PATH }}
+# 
+#      # Upload des build/dist folders für den späteren Zugriff
+#      - uses: actions/upload-artifact@v4
+#        with:
+#          name: dist
+#          path: ./${{ vars.CLIENT_PATH }}/dist
+# 
+
+  
+  # Build and push Docker image
+  publish:
+    needs: [build-backend]#, build-frontend]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+ 
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v4  # Download aller Artefakte, man kann auch gezielt einzelne Artefakte laden -> https://github.com/marketplace/actions/download-a-build-artifact#download-single-artifact
+      - name: Login to GitHub Container Registry
+        # https://github.com/marketplace/actions/docker-login
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ env.TOKEN }} # secrets.GITHUB_TOKEN ist nicht ausreichend, da das Standard Token keinen Schreibzugriff auf die WDR Container Registry hat
+ 
+      # Vorbereiten des Docker Images, hier wird der Tag etc. definiert
+      # https://github.com/marketplace/actions/docker-metadata-action
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch,suffix=-latest
+            type=ref,event=branch,suffix=-${{ github.run_number }}
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{version}}-latest
+            type=semver,pattern={{version}}-${{ github.run_number }}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+      
+      # !!! WICHTIG !!! unbedingt den "context: ." angeben da er sonst die Artefakte nicht findet sondern das cleane ausgecheckte Repository nutzt
+      # https://github.com/marketplace/actions/build-and-push-docker-images
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
