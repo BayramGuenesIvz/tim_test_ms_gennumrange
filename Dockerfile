@@ -15,5 +15,5 @@ COPY ./main app/main
 COPY web app/web
 
 WORKDIR /app
-
+USER root
 CMD ./main

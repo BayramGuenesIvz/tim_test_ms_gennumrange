@@ -7,13 +7,13 @@ RUN microdnf install wget
 RUN microdnf install findutils
 RUN microdnf clean all
 
-RUN groupadd -g 3203 wdr-a2k8s
-RUN usermod -a -G wdr-a2k8s root
-
+#RUN groupadd -g 3203 wdr-a2k8s
+#RUN usermod -a -G wdr-a2k8s root
+USER root
 
 COPY ./main app/main
 COPY web app/web
 
 WORKDIR /app
-
+USER root
 CMD ./main
