@@ -3,6 +3,7 @@ on:
   push:
     branches-ignore:
       - main
+      
 
 jobs:
   # Building backend/server application
