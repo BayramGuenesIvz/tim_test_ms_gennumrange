@@ -1,21 +1,16 @@
-FROM alpine:latest
+FROM oraclelinux:9-slim
 
 ADD cert/* /etc/ssl/certs/
 
-# security updates, useful packages/tools
-RUN apk update && \
-    apk add \
-        bash \
-        curl \
-        shadow \
-        wget && \
-    rm -rf /var/cache/apk/*
+RUN microdnf install oracle-instantclient-release-el9
+RUN microdnf install wget
+RUN microdnf install findutils
+RUN microdnf clean all
 
-#RUN groupadd -g 3203 wdr-a2k8s
-#RUN usermod -a -G wdr-a2k8s root
+RUN groupadd -g 3203 wdr-a2k8s
+RUN usermod -a -G wdr-a2k8s root
 
 
-#COPY cmd/tim_test_ms_gennumrange/main app/main
 COPY ./main app/main
 COPY web app/web
 
