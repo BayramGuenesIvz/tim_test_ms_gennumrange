@@ -12,8 +12,8 @@ jobs:
     with:
       run-tests: true
       go-file-path: "./cmd/tim_test_ms_gennumrange/main.go"
-    secrets:
-      PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+  #  secrets:
+  #    PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
   ## Building client application
   #build-frontend:
   #  uses: WestdeutscherRundfunkKoeln/am-shared-workflows/.github/workflows/npm-build.yml@main
