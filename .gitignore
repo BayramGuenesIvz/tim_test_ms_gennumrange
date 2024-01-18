@@ -33,3 +33,5 @@ tim_test_ms_gennumrange.git
 docker-entrypoint.sh
 
 tim_test_ms_gennumrange
+cmd/tim_test_ms_gennumrange/main
+*/main
