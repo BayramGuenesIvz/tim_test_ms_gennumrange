@@ -81,7 +81,8 @@ jobs:
   
   # Build and push Docker image
   publish:
-    needs: [build-backend]#, build-frontend]
+    needs: [build-backend]
+    #, build-frontend]
     runs-on: ubuntu-latest
     permissions:
       contents: write
